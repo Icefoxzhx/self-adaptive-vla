@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="Self-Adaptive VLA: a post-training recipe that lets a VLA policy adapt to deployment-time hardware shifts by conditioning on its own rollouts.">
+  <meta name="keywords" content="Self-Adaptive VLA, Vision-Language-Action, test-time adaptation, hardware shift, robot deployment, context encoder">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Self-Adaptive VLA for Robust Robot Deployment</title>
+
+  <meta property="og:title" content="Self-Adaptive VLA for Robust Robot Deployment"/>
+  <meta property="og:description" content="A post-training recipe that lets a VLA policy iteratively adapt to deployment-time hardware shifts, using its own rollouts as context."/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:image" content="./static/images/teaser_poster.jpg"/>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="./static/css/sav.css">
+  <link rel="icon" href="./static/images/favicon.svg" type="image/svg+xml">
+
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<section class="hero sav-header">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-2 publication-title sav-one-line">
+            <span class="sav-gradient">Self-Adaptive VLA</span> for Robust Robot Deployment
+          </h1>
+
+          <div class="is-size-5 publication-authors" style="margin-top: 0.6rem;">
+            <span class="author-block">
+              <a href="https://icefoxzhx.github.io/">Hongxin Zhang</a><sup>1,2*</sup>,</span>
+            <span class="author-block">
+              <a href="https://chunru-lin.github.io/">Chunru Lin</a><sup>1,2*</sup>,</span>
+            <span class="author-block">
+              <a href="https://zswang666.github.io/">Tsun-Hsuan Wang</a><sup>2</sup>,</span>
+            <span class="author-block">
+              <a href="https://www.zhenjiaxu.com/">Zhenjia Xu</a><sup>2</sup>,</span>
+            <span class="author-block">
+              <a href="https://people.csail.mit.edu/ganchuang">Chuang Gan</a><sup>1</sup></span>
+          </div>
+
+          <div class="is-size-5 publication-authors" style="margin-top: 0.3rem;">
+            <span class="author-block"><sup>1</sup>University of Massachusetts Amherst</span>
+            <span class="author-block">&nbsp;&nbsp;<sup>2</sup>Genesis AI</span>
+          </div>
+          <p class="sav-note"><sup>*</sup>Equal contribution</p>
+
+          <div class="column has-text-centered" style="margin-top: 0.6rem;">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2609.30092" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="ai ai-arxiv"></i></span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://arxiv.org/pdf/2609.30092" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="#video" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="fas fa-video"></i></span>
+                  <span>Video</span>
+                </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TEASER VIDEO ===================== -->
+<section class="section" id="video" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <div class="sav-video">
+      <video src="./static/videos/teaser.mp4" poster="./static/images/teaser_poster.jpg"
+             controls muted playsinline preload="metadata"></video>
+    </div>
+    <p class="has-text-centered sav-note" style="margin-top: 0.6rem;">
+      Video with narration. Unmute to listen.
+    </p>
+  </div>
+</section>
+
+<hr class="sav-rule">
+
+<!-- ===================== ABSTRACT ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3 sav-section-title">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            While Vision-Language-Action (VLA) models demonstrate impressive capabilities in robotic manipulation,
+            their memoryless nature renders them brittle to test-time environment shifts, particularly hardware
+            shifts caused by wear or imperfect calibration. Enabling these models to self-adapt during deployment
+            without requiring continuous on-site recalibration remains a critical bottleneck for real-world
+            scalability. In this work, we introduce <strong>Self-Adaptive VLA</strong>, a novel post-training
+            recipe that enables the policy to iteratively adapt to deployment-time hardware shifts leveraging its
+            own rollouts as context. To do so, we first collect policy rollouts under deliberately injected
+            hardware shifts. We then transform the base policy's training data into shift-conditioned expert
+            demonstrations by pre-compensating the expert actions for these known shifts. Next, we introduce a
+            lightweight, plug-in context encoder that compresses the context, including visual observation,
+            proprioception, and actions in the shifted environment, into a latent <em>context token</em>. This
+            token modulates the policy through adaptive layer normalization (AdaLN). Furthermore, we find that
+            context tokens can be ensembled, allowing the policy to iteratively self-correct and mitigate failures
+            step by step. Extensive experiments across four precision-critical bi-manual and dexterous
+            manipulation tasks show that Self-Adaptive VLA recovers over 80% of the base policy's performance
+            under hardware shifts, such as actuation bias and joint encoder offsets. Moreover, Self-Adaptive VLA
+            enables more robust deployment to new workstations compared to the base policy. Our approach provides
+            a pathway for robust large-scale real-world robot deployments and easier maintenance.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="sav-rule">
+
+<!-- ===================== METHOD ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="has-text-centered" style="margin-bottom: 1.2rem;">
+      <p class="sav-eyebrow">How it works</p>
+      <h2 class="title is-3 sav-section-title">Learning to Adapt from Its Own Rollouts</h2>
+    </div>
+    <div class="sav-video is-light">
+      <video src="./static/videos/method.mp4" poster="./static/images/method_poster.jpg"
+             autoplay muted loop playsinline preload="auto"></video>
+    </div>
+
+    <div class="sav-steps">
+      <div class="sav-step">
+        <h4><span class="num">a</span>Contextualized data</h4>
+        We roll out the frozen base policy under randomly injected hardware shifts to collect context
+        rollouts. Each is paired with a human expert demonstration whose actions are pre-compensated for the
+        same shift. The target behavior always comes from expert data, never from the sub-optimal rollout, and
+        no additional human collection is needed.
+      </div>
+      <div class="sav-step">
+        <h4><span class="num">b</span>Context encoder</h4>
+        A lightweight plug-in encoder compresses the rollout (multi-view video, proprioception and actions) into
+        a single <em>context token</em>. The token is added to the DiT timestep conditioning before AdaLN and is
+        trained with the same flow-matching loss as the base policy, while the VLM stays frozen.
+      </div>
+      <div class="sav-step">
+        <h4><span class="num">c</span>Iterative ensembling</h4>
+        At test time, context tokens from multiple trials are simply summed. Each new failure reveals a shift
+        that earlier failures masked, so the policy converges on the right compensation step by step. The token
+        is computed once per trial, which adds zero overhead to the closed-loop control cycle.
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="sav-rule">
+
+<!-- ===================== ITERATIVE ADAPTATION ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="has-text-centered" style="margin-bottom: 1.4rem;">
+      <p class="sav-eyebrow">Iterative self-correction</p>
+      <h2 class="title is-3 sav-section-title">Each Failure Reveals the Next Shift</h2>
+      <p class="content sav-lead">
+        <em>Assemble Ring</em> with a 20-DoF dexterous hand under an unknown joint encoder offset. Each trial
+        conditions on the rollouts before it: the first failure fixes the grasp, and the second fixes the
+        insertion.
+      </p>
+    </div>
+    <div class="sav-trials cols-3 sav-sync">
+      <div class="sav-trial">
+        <div class="sav-trial-head"><span class="tag">Trial 0</span><span class="res fail">&#10007; failed grasping</span></div>
+        <div class="sav-video"><video src="./static/videos/ring/trial0.mp4" muted playsinline preload="auto"></video></div>
+        <p class="sav-ctx">no context</p>
+      </div>
+      <div class="sav-trial">
+        <div class="sav-trial-head"><span class="tag">Trial 1</span><span class="res fail">&#10007; failed assembly</span></div>
+        <div class="sav-video"><video src="./static/videos/ring/trial1.mp4" muted playsinline preload="auto"></video></div>
+        <p class="sav-ctx">context: Trial 0</p>
+      </div>
+      <div class="sav-trial">
+        <div class="sav-trial-head"><span class="tag">Trial 2</span><span class="res ok">&#10003; success</span></div>
+        <div class="sav-video"><video src="./static/videos/ring/trial2.mp4" muted playsinline preload="auto"></video></div>
+        <p class="sav-ctx">context: Trials 0 + 1</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="sav-rule">
+
+<!-- ===================== CROSS-STATION ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="has-text-centered" style="margin-bottom: 1.4rem;">
+      <p class="sav-eyebrow">Deployment</p>
+      <h2 class="title is-3 sav-section-title">Deploying to an Uncalibrated Workstation</h2>
+      <p class="content sav-lead">
+        Five <em>Assemble Ring</em> episodes per column. The policy is trained on data from Station 1 only.
+        Moved directly to Station 2, which has its own hardware shifts, the base policy fails every episode.
+        Given failed trials on the new station as context, Self-Adaptive VLA recovers.
+        <span class="sav-legend"><i class="ok"></i>success <i class="fail"></i>failure</span>
+      </p>
+    </div>
+    <div class="sav-cross sav-sync">
+      <div class="sav-col">
+        <div class="sav-col-head"><span class="where">Station 1</span><span class="who">Base policy</span><span class="score ok">5/5</span></div>
+        <video src="./static/videos/cross/station1_base.mp4" muted playsinline preload="auto"></video>
+      </div>
+      <div class="sav-col">
+        <div class="sav-col-head"><span class="where">Station 2</span><span class="who">Base policy</span><span class="score fail">0/5</span></div>
+        <video src="./static/videos/cross/station2_base.mp4" muted playsinline preload="auto"></video>
+      </div>
+      <div class="sav-col is-ours">
+        <div class="sav-col-head"><span class="where">Station 2</span><span class="who">Ours &middot; 1 failed trial as context</span><span class="score mid">2/5</span></div>
+        <video src="./static/videos/cross/station2_ours_1trial.mp4" muted playsinline preload="auto"></video>
+      </div>
+      <div class="sav-col is-ours">
+        <div class="sav-col-head"><span class="where">Station 2</span><span class="who">Ours &middot; 2 failed trials as context</span><span class="score ok">5/5</span></div>
+        <video src="./static/videos/cross/station2_ours_2trials.mp4" muted playsinline preload="auto"></video>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="sav-rule">
+
+<!-- ===================== MORE TASKS ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="has-text-centered" style="margin-bottom: 1.2rem;">
+      <p class="sav-eyebrow">More tasks</p>
+      <h2 class="title is-3 sav-section-title">More Tasks</h2>
+      <p class="content sav-lead">
+        <em>Transport Corn</em>, <em>Cap Marker</em> and <em>Insert Tube</em> on Piper and Piper-X arms with
+        parallel grippers, each under an unknown hardware shift. Four episodes per task: the first trial fails, and the
+        policy succeeds once it conditions on its own failed rollouts.
+      </p>
+    </div>
+    <div class="sav-pills" id="task-nav">
+      <button data-task="corn" class="active">Transport Corn</button>
+      <button data-task="marker">Cap Marker</button>
+      <button data-task="tube">Insert Tube</button>
+    </div>
+    <div class="sav-pills is-small" id="ep-nav"></div>
+    <div class="sav-trials sav-sync" id="task-trials"></div>
+  </div>
+</section>
+
+<hr class="sav-rule">
+
+<!-- ===================== BIBTEX ===================== -->
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title sav-section-title">BibTeX</h2>
+    <pre><code>@article{zhang2026selfadaptive,
+  title={Self-Adaptive VLA for Robust Robot Deployment},
+  author={Hongxin Zhang and Chunru Lin and Tsun-Hsuan Wang and Zhenjia Xu and Chuang Gan},
+  journal={arXiv preprint arXiv:2609.30092},
+  year={2026},
+}</code></pre>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content has-text-centered">
+          <p>
+            Website template borrowed from
+            <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ---------- synced looping: every video in a .sav-sync group restarts together ----------
+  function syncGroup(group) {
+    var vids = Array.prototype.slice.call(group.querySelectorAll('video'));
+    if (!vids.length) return;
+    function restart() {
+      vids.forEach(function (v) { v.currentTime = 0; v.play().catch(function () {}); });
+    }
+    vids.forEach(function (v) {
+      v.loop = false;
+      v.onended = function () {
+        if (vids.every(function (u) { return u.ended; })) restart();
+      };
+    });
+    // start once every clip can play, so the trials stay aligned
+    var ready = 0;
+    vids.forEach(function (v) {
+      if (v.readyState >= 3) { ready++; return; }
+      v.addEventListener('canplay', function once() {
+        v.removeEventListener('canplay', once);
+        if (++ready === vids.length) restart();
+      });
+    });
+    if (ready === vids.length) restart();
+  }
+
+  // ---------- more tasks: task + episode selector ----------
+  (function () {
+    // episode -> recorded trial cells shown, in order; the last one succeeds
+    var EPISODES = {
+      corn:   [[6, [0, 1]], [3, [0, 1]], [4, [0, 1]], [1, [0, 1, 2]]],
+      marker: [[1, [0, 1]], [6, [0, 1]], [0, [1, 2, 3]], [9, [1, 2, 3]]],
+      tube:   [[5, [0, 1]], [8, [0, 1]], [10, [0, 1]], [3, [0, 1, 2]]]
+    };
+    var taskNav = document.getElementById('task-nav');
+    var epNav = document.getElementById('ep-nav');
+    var grid = document.getElementById('task-trials');
+
+    function showEpisode(task, i) {
+      var ep = EPISODES[task][i][0], cells = EPISODES[task][i][1], n = cells.length;
+      grid.className = 'sav-trials sav-sync cols-' + n;
+      grid.innerHTML = '';
+      cells.forEach(function (cell, k) {
+        var last = (k === n - 1);
+        grid.insertAdjacentHTML('beforeend',
+          '<div class="sav-trial">' +
+            '<div class="sav-trial-head"><span class="tag">Trial ' + k + '</span>' +
+              (last ? '<span class="res ok">&#10003; success</span>' : '<span class="res fail">&#10007; failure</span>') +
+            '</div>' +
+            '<div class="sav-video"><video src="./static/videos/tasks/' + task + '/ep' + ep + '_t' + cell + '.mp4" muted playsinline preload="auto"></video></div>' +
+          '</div>');
+      });
+      epNav.querySelectorAll('button').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-i') === String(i));
+      });
+      syncGroup(grid);
+    }
+
+    function showTask(task) {
+      taskNav.querySelectorAll('button').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-task') === task);
+      });
+      epNav.innerHTML = EPISODES[task].map(function (_, i) {
+        return '<button data-i="' + i + '">Episode ' + (i + 1) + '</button>';
+      }).join('');
+      epNav.onclick = function (e) {
+        var b = e.target.closest('button');
+        if (b) showEpisode(task, Number(b.getAttribute('data-i')));
+      };
+      showEpisode(task, 0);
+    }
+
+    taskNav.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (b) showTask(b.getAttribute('data-task'));
+    });
+    showTask('corn');
+  })();
+
+  document.querySelectorAll('.sav-sync').forEach(function (g) {
+    if (g.id !== 'task-trials') syncGroup(g);
+  });
+</script>
+
+
+</body>
+</html>
